@@ -16,6 +16,9 @@ class HandDetector():
         self.mp_hand = mp.solutions.hands
         self.hands = self.mp_hand.Hands(mode, self.maxHand, self.complexity,self.minDetectionConf, self.trackConf)
         self.mp_draw = mp.solutions.drawing_utils
+        self.tipIds = [4, 8, 12, 16, 20]
+        self.fingers = []
+        self.lmList = []
 
     def findHands(self, img, draw=True, flipType=False):
         """
@@ -63,7 +66,7 @@ class HandDetector():
                 allHands.append(myHand)
 
                 ## draw
-                if draw:
+                if not draw:
                     self.mp_draw.draw_landmarks(img, handLms,
                                                self.mp_hand.HAND_CONNECTIONS,self.mp_draw.DrawingSpec(color=(0,0,0), thickness=5, circle_radius=2),
             self.mp_draw.DrawingSpec(color=(0,0,150), thickness=4, circle_radius=2))
@@ -77,7 +80,35 @@ class HandDetector():
         else:
             return allHands
 
+    def fingersUp(self, myHand):
+        """
+        Finds how many fingers are open and returns in a list.
+        Considers left and right hands separately
+        :return: List of which fingers are up
+        """
+        myHandType = myHand["type"]
+        myLmList = myHand["lmList"]
+        if self.results.multi_hand_landmarks:
+            fingers = []
+            # Thumb
+            if myHandType == "Right":
+                if myLmList[self.tipIds[0]][0] > myLmList[self.tipIds[0] - 1][0]:
+                    fingers.append(1)
+                else:
+                    fingers.append(0)
+            else:
+                if myLmList[self.tipIds[0]][0] < myLmList[self.tipIds[0] - 1][0]:
+                    fingers.append(1)
+                else:
+                    fingers.append(0)
 
+            # 4 Fingers
+            for id in range(1, 5):
+                if myLmList[self.tipIds[id]][1] < myLmList[self.tipIds[id] - 2][1]:
+                    fingers.append(1)
+                else:
+                    fingers.append(0)
+        return fingers
 
 def main():
 
@@ -95,6 +126,7 @@ def main():
             bbox1 = hand1["bbox"]  # Bounding box info x,y,w,h
             centerPoint1 = hand1['center']  # center of the hand cx,cy
             handType1 = hand1["type"]  # Handtype Left or Right
+
 
 
 
